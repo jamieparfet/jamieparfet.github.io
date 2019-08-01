@@ -1,0 +1,25 @@
+# Theme customization - please change from the defaults!
+
+#{% if site.data.theme.show_x %}
+#{% endif %}
+
+
+# Color for top bar, links, etc
+highlight_color: '#3498db'
+
+# Profile links on the left sidebar, leave blank to ignore
+show_social: false
+social:
+  #github: jamieparfet
+  #linkedin: parfet
+
+# "Hi, I'm _______"
+name: Jamie Parfet
+#email: test@example.com
+tagline: "Another security blog"
+
+# Toggle "Postings are my own" disclaimer in footer
+show_disclaimer: false
+
+# Toggle copyright, "Built with Jekyll", and theme
+show_footer: false

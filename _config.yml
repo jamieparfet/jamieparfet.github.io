@@ -1,0 +1,20 @@
+# Permalinks
+#
+# Use of `relative_permalinks` ensures post links from the index work properly.
+permalink:           pretty
+#relative_permalinks: true
+
+# Setup
+title:               Jamie Parfet
+tagline:             'Security Blog'
+description:         'Personal security blog.'
+url:                 https://jamieparfet.com
+baseurl:             ''
+paginate:            5
+
+# About/contact
+author:
+  name:              Jamie Parfet
+  #url:               https://twitter.com/jamieparfet
+  #email:             no@no
+
