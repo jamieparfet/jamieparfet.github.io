@@ -17,6 +17,7 @@ _site
 
 # OS or Editor folders
 .DS_Store
+.jekyll-cache
 ._*
 Thumbs.db
 .cache

@@ -1,18 +1,23 @@
 ---
 layout: post
-title: Automating Subdomain Enumeration with Aquatone and Amass
+title: Automating Subdomain Enumeration with Subfinder and Aquatone
 published: true
 ---
 
-This post goes over the basic installation and usage of two popular subdomain enumeration tools, Aquatone and Amass, and provides a simple Bash script to automate their usage and push the results to GitHub for easier analysis.
+The objective of this post is to provide some basic groundwork for security researchers to automate the process of identifying and analyzing the attack surface of a large number of hosts. It goes over the installation and usage of two tools that can greatly reduce the amount of time involved in identifying interesting targets for bug hunting.
+
+* Subfinder - subdomain enumeration using passive data sources
+* Aquatone - visual inspection of websites and provides a simple Bash script to automate their usage and push the results to GitHub for easier analysis.
 
 ## Background
 
-Subdomain enumeration is an essential part of bug hunting. At a high level, there are basically two subdomain enumeration methods: passive and active.
+Subdomain enumeration is an essential part of bug hunting but can easily become overwhelming when a particular target has thousands of subdomains.
 
-Passive enumeration methods *do not* engage a target domain or its subdomains directly and are typically achieved by querying various open data sources to identify as many potential subdomains as possible. Active enumeration methods, on the other hand, *do* engage a target domain directly and may involve brute forcing subdomains and port scanning any that are discovered.
+Being able to quickly identify and begin testing a large number saves a lot of time and helps
 
-There are dozens of open-source subdomain enumeration tools available on the internet, but I have found that Aquatone and Amass consistently outperform other tools by finding the highest number of subdomains in the shortest amount of time. Also considering Aquatone's screenshotting capabilities, there is no question that it is one of the best tools for the job.
+Subfinder is undoubtedly one of the best open source subdomain enumeration tools. It consistently outperforms the dozens of similar tools by finding the largest amount of subdomains in the shortest amount of time.
+
+Combining Subfinder, a passive enumeration tool, with Aquatone, an active enumeration tool,  
 
 ### Regarding Aquatone: Go or Ruby?
 Aquatone was originally written in Ruby with the capability of querying a decent variety of different data sources to identify potential subdomains. When [@michenriksen](https://twitter.com/michenriksen) rewrote Aquatone entirely in Go, he dropped the subdomain enumeration functionality in order to focus more on the visual inspection and analysis of subdomains. Both versions of Aquatone are extremely good at what they do, so we will use both.
@@ -20,7 +25,7 @@ Aquatone was originally written in Ruby with the capability of querying a decent
 ---
 
 # Part 1: Setup and Installation
-This section will walk through the setup, installation, and usage of Aquatone Ruby, Aquatone Go, and Amass.
+This section will walk through the setup, installation, and usage of Subfinder and Aquatone.
 
 ## Step 1: Aquatone Ruby
 Import RVM's keys and install RVM.
@@ -49,17 +54,19 @@ If you get an error, you might need to source RVM.
 $ source ~/.rvm/scripts/rvm
 ```
 
-Once Aquatone Ruby is successfully installed, you will have to create the ```~/aquatone/.keys.yml``` file to store your credentials and API keys that Aquatone Ruby will use to collect data from various sources. 
+Once Aquatone Ruby is successfully installed, you will have to create the ```~/config/Subfinder/config.json``` file to store your credentials and API keys that Aquatone Ruby will use to collect data from various sources. 
 ```
----
-virustotal: 1234567890123456789012345678901234567890123456789012345678901234
-riddler_username: user@example.com
-riddler_password: s3cr3t-h4ck3r-p4ssw0rd
-censys_id: 1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m5n6o7p
-censys_secret: 1A2b3C4d5E6f7G8h9I0j1K2l3M5n6O7p
-passivetotal_key: user@example.com
-passivetotal_secret: '1234567890123456789012345678901234567890123456789012345678901234'
-shodan: 1A2b3C4d5E6f7G8h9I0j1K2l3M5n6O7p
+{
+	"virustotalApikey": "1234567890123456789012345678901234567890123456789012345678901234",
+	"passivetotalUsername": "user@example.com",
+	"passivetotalKey": "1234567890123456789012345678901234567890123456789012345678901234",
+	"securitytrailsKey": "1A2b3C4d5E6f7G8h9I0j1K2l3M5n6O7p",
+	"riddlerEmail": "user@example.com",
+	"riddlerPassword": "p4ssw0rd",
+	"censysUsername": "user",
+	"censysSecret": "1A2b3C4d5E6f7G8h9I0j1K2l3M5n6O7p",
+	"shodanApiKey": "1A2b3C4d5E6f7G8h9I0j1K2l3M5n6O7p"
+}
 ```
 
 ### Usage
@@ -101,7 +108,7 @@ $ echo "export PATH=$PATH:$HOME/go/bin" >> ~/.profile
 
 Download the [latest](https://github.com/michenriksen/aquatone/releases/latest) Aquatone Go binary and place it in your Go path.
 ```
-$ wget https://github.com/michenriksen/aquatone/releases/download/v1.3.2/aquatone_linux_amd64_1.4.2.zip
+$ wget https://github.com/michenriksen/aquatone/releases/download/v1.7.0/aquatone_linux_amd64_1.7.0.zip
 $ unzip aquatone_linux_amd64_1.4.2.zip
 $ mv aquatone $HOME/go/bin
 $ rm aquatone*.zip
