@@ -11,7 +11,7 @@ Here are a few of the most important parts of my default Burp configuration.
 ---
 
 # Target Scope Generator
-I created this client-side target scope generator in order to save time configuring the proper scope for an engagement. If your target scope contains dozens or even hundreds of domains and URLs, enter them here and click `Generate`. It will insert the results into the `include` section of the <a href="#sample-scope-options">sample scope</a> options I included further down. You can also edit those sample options (only the "exclude" portion) and then click `Generate` in order to have your target scope combined with your custom "exclude" options.
+I created this client-side target scope generator in order to save time configuring the proper scope for an engagement. If your target scope contains dozens or even hundreds of domains and URLs, enter them here and click `Generate`. It will insert the results into the `include` list of the <a href="#sample-scope-options">sample scope</a> options I included further down. You can also edit those sample options (only the "exclude" portion) and then click `Generate` in order to have your target scope combined with your custom "exclude" options.
 
 > *This may only work for domains and URLs that resemple the sample text. I have not tested URLs containing query strings.*
 
@@ -67,7 +67,6 @@ Firefox will often issue requests in the background for things like <a href="htt
 I like to keep requests to as few lines as possible by removing some unnecessary headers. This can cause issues if the target application is sending XHR requests with modified `Accept*` headers. If I start noticing errors, I check the "Original Request" tab in the proxy history to see if my rules have removed any pertinent information.
 
 ![proxy-match-and-replace](/img/burp-configuration/proxy-match-and-replace.png)
-
 
 Match and Replace
 <textarea rows="15"

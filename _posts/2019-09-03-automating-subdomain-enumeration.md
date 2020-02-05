@@ -1,123 +1,108 @@
 ---
 layout: post
-title: Automating Subdomain Enumeration with Subfinder and Aquatone
+title: Automating Subdomain Enumeration and Analysis
 published: true
 ---
 
-The objective of this post is to provide some basic groundwork for security researchers to automate the process of identifying and analyzing the attack surface of a large number of hosts. It goes over the installation and usage of two tools that can greatly reduce the amount of time involved in identifying interesting targets for bug hunting.
+> *This was updated in January 2020 after the release of subfinder 2.0*
 
-* Subfinder - subdomain enumeration using passive data sources
+Subdomain enumeration is an essential part of bug hunting. Unfortunately, it can quickly become overwhelming if a particular target has thousands of hosts. Being able to quickly identify interesting web applications across large environments allows you to spend more time looking for bugs and less time analyzing your results.
+
+The objective of this post is to provide some basic groundwork for security researchers and bug bounty hunters to automate the process of analyzing the web-based attack surface for a large number of hosts by utilizing the following tools:
+
+* subfinder - subdomain enumeration using passive data sources
 * Aquatone - visual inspection of websites and provides a simple Bash script to automate their usage and push the results to GitHub for easier analysis.
-
-## Background
-
-Subdomain enumeration is an essential part of bug hunting but can easily become overwhelming when a particular target has thousands of subdomains.
-
-Being able to quickly identify and begin testing a large number saves a lot of time and helps
-
-Subfinder is undoubtedly one of the best open source subdomain enumeration tools. It consistently outperforms the dozens of similar tools by finding the largest amount of subdomains in the shortest amount of time.
-
-Combining Subfinder, a passive enumeration tool, with Aquatone, an active enumeration tool,  
-
-### Regarding Aquatone: Go or Ruby?
-Aquatone was originally written in Ruby with the capability of querying a decent variety of different data sources to identify potential subdomains. When [@michenriksen](https://twitter.com/michenriksen) rewrote Aquatone entirely in Go, he dropped the subdomain enumeration functionality in order to focus more on the visual inspection and analysis of subdomains. Both versions of Aquatone are extremely good at what they do, so we will use both.
 
 ---
 
 # Part 1: Setup and Installation
-This section will walk through the setup, installation, and usage of Subfinder and Aquatone.
+This section will walk through the setup, installation, and usage of subfinder and Aquatone.
 
-## Step 1: Aquatone Ruby
-Import RVM's keys and install RVM.
-```
-$ gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-$ curl -sSL https://get.rvm.io | bash -s stable --ruby
-```
+## Step 1: Install golang
+go is required to run the tools used in this post. The latest stable version of go can be found <a href="https://golang.org/dl/" target="_blank" rel="noopener noreferrer">here</a>.
 
-Clone the Aquatone Ruby version.
-```
-$ git clone --single-branch --branch ruby https://github.com/michenriksen/aquatone.git
+Download the latest stable version for Linux:
+```bash 
+$ wget https://dl.google.com/go/go1.13.7.linux-amd64.tar.gz
 ```
 
-*Please note that you will have to update some of the collectors in* `lib/aquatone/collectors/` *for them to work properly. For example, the PTRarchive.com collector uses an outdated search URL and does not include the cookie necessary for avoiding bot detection.*
-
-Install Aquatone Ruby.
-```
-$ cd aquatone/
-$ gem install bundler
-$ bundle install
-$ gem build aquatone
-$ gem install aquatone
-```
-If you get an error, you might need to source RVM.
-```
-$ source ~/.rvm/scripts/rvm
+Extract the archive and move it to the proper location:
+```bash
+$ sudo tar -xvf go*.linux-amd64.tar.gz
+$ sudo mv go /usr/local
 ```
 
-Once Aquatone Ruby is successfully installed, you will have to create the ```~/config/Subfinder/config.json``` file to store your credentials and API keys that Aquatone Ruby will use to collect data from various sources. 
+Add the necessary `export` commands to your `.bashrc` script so that the environment varibles used by go are set each time you login and initialize a shell. This may be different depending on your setup.
+```bash
+$ echo 'export GOROOT=/usr/local/go' >> ~/.bashrc
+$ echo 'export GOPATH=$HOME/go' >> ~/.bashrc
+$ echo 'export PATH=$GOPATH/bin:$GOROOT/bin:$PATH' >> ~/.bashrc
 ```
-{
-	"virustotalApikey": "1234567890123456789012345678901234567890123456789012345678901234",
-	"passivetotalUsername": "user@example.com",
-	"passivetotalKey": "1234567890123456789012345678901234567890123456789012345678901234",
-	"securitytrailsKey": "1A2b3C4d5E6f7G8h9I0j1K2l3M5n6O7p",
-	"riddlerEmail": "user@example.com",
-	"riddlerPassword": "p4ssw0rd",
-	"censysUsername": "user",
-	"censysSecret": "1A2b3C4d5E6f7G8h9I0j1K2l3M5n6O7p",
-	"shodanApiKey": "1A2b3C4d5E6f7G8h9I0j1K2l3M5n6O7p"
-}
+
+Finally, execute the updated login script to set the proper environment variables and then test that go is properly installed.
+```bash
+$ source ~/.bashrc
+$ go version
+```
+
+## Step 2: subfinder
+
+Install subfinder using go's built-in functionality:
+
+```bash
+$ go get github.com/projectdiscovery/subfinder/cmd/subfinder
+```
+
+To test the installation, simply run `subfinder` with no arguments. A sample config file will automatically be created at `~/.config/subfinder/config.yaml`. This config file stores credentials and API keys that the tool uses to collect data from various <a href="https://github.com/projectdiscovery/subfinder/tree/master/pkg/subscraping/sources" target="_blank" rel="noopener noreferrer">sources</a>.
+
+```yaml
+resolvers:
+  ...
+sources:
+  ...
+binaryedge:
+  - 1234ab56-7c8d-9012-e34f-ghi12j3456k7
+censys:
+  - username:1A2b3C4d5E6f7G8h9I0j1K2l3M5n6O7p
+certspotter:
+  - 1234_AbCdeFGhi1JKL2m3NopQ
+passivetotal:
+  - user@example.com:p4ssw0rd
+securitytrails:
+  - 1A2b3C4d5E6f7G8h9I0j1K2l3M5n6O7p
+shodan:
+  - 1A2b3C4d5E6f7G8h9I0j1K2l3M5n6O7p
+urlscan:
+  - 1234ab56-7c8d-9012-e34f-ghi12j3456k7
+virustotal:
+  - 1A2b3C4d5E6f7G8h9I0j1K2l3M5n6O7p1A2b3C4d5E6f7G8h9I0j1K2l3M5n6O7p
 ```
 
 ### Usage
-The `aquatone-discover` tool queries a variety of common data sources to identify subdomains. It allows you to specify options such as the number of threads, time to sleep between lookups, and much more.
+Subfinder allows you to specify options such as what sources to query (or exclude), which resolvers to use, the number of concurrent threads, and more.
+
 ```bash
-$ aquatone-discover --threads 25 --fallback-nameservers 1.1.1.1,8.8.8.8,9.9.9.9,208.67.222.222 --domain example.com
+$ subfinder -t 20 -exclude-sources securitytrails -d example.com -o hosts.txt
 ```
-In order to remain passive, you must disable dictionary-based brute forcing by providing the argument `--disable-collectors dictionary`.
 
 ---
 
-## Step 2: Amass
-The easiest way to install Amass is through [Snap](https://snapcraft.io/).
+## Step 3: Aquatone
+
+Install Aquatone using go's built-in functionality:
+```bash
+$ go get github.com/michenriksen/aquatone
 ```
-$ sudo snap install amass
+
+Aquatone relies on Chromium to take screenshots of webpages, which can be installed with apt:
+```
+$ sudo apt install -y chromium-browser
 ```
 
 ### Usage
-Amass allows you to specify the output directory with the `-o` argument.
-
+Aquatone can ingest data from a file or straight from stdout, which is quite useful when working with other tools. Aquatone allows you to specify which ports to scan, various timeout options, and more.
 ```bash
-$ amass -d example.com -ip -o ~/aquatone
-```
-
----
-
-## Step 3: Aquatone Go
-
-Aquatone Go relies on Chromium to take screenshots of webpages. Install Chromium and other dependencies before installing Aquatone Go.
-```
-$ sudo apt install -y unzip golang chromium-browser
-```
-
-Create the Go directory where the Aquatone binary will be stored and place it in your path.
-```
-$ mkdir -p $HOME/go/bin
-$ echo "export PATH=$PATH:$HOME/go/bin" >> ~/.profile
-```
-
-Download the [latest](https://github.com/michenriksen/aquatone/releases/latest) Aquatone Go binary and place it in your Go path.
-```
-$ wget https://github.com/michenriksen/aquatone/releases/download/v1.7.0/aquatone_linux_amd64_1.7.0.zip
-$ unzip aquatone_linux_amd64_1.4.2.zip
-$ mv aquatone $HOME/go/bin
-$ rm aquatone*.zip
-```
-
-### Usage
-Aquatone Go is made to be flexible and can ingest data from a file or straight from another tool's output. For this example, imagine you have a text file named `hosts.txt` that contains a list of hostnames (most likely gathered from running one of the previous tools). All you need to do is pipe the file to Aquatone Go and the tool will work its magic.
-```bash
-$ cat ~/aquatone/example.com/hosts.txt | aquatone -ports 80,443,8080 -out ~/aquatone/example.com
+$ cat hosts.txt | aquatone -threads 20 -ports 80,443,8080 -screenshot-timeout 15000 -out output.txt
 ```
 
 ---
@@ -139,7 +124,7 @@ Add the key to your GitHub account under **Settings > SSH and GPG keys > [New SS
 $ cat ~/.ssh/id_rsa.pub
 ```
 
-Create a repository on GitHub (you will probably want to make it private). Do not initialize it with any files. The repository used in this example is called ```enumeration-results```.
+Create a repository on GitHub (you will probably want to make it private). Do not initialize it with any files. The repository used in this example is called `subdomain-enumeration`.
 
 Back on the server, configure Git to use your GitHub username and email address if you haven't already.
 ```
@@ -147,118 +132,125 @@ $ git config --global user.name "github-username"
 $ git config --global user.email "5028417+github-username@users.noreply.github.com"
 ```
 
-Create the required Aquatone directory.
+Create the required directory.
 ```
-$ mkdir ~/aquatone
-$ cd ~/aquatone
+$ mkdir ~/subdomain-enumeration
+$ cd ~/subdomain-enumeration
 ```
 
-Initialize the repository in the ```~/aquatone``` directory.
+Initialize the git repository in the `~/subdomain-enumeration` directory.
 ```
 $ echo "# Subdomain Enumeration and Discovery Scan Results" >> README.md
 $ git init
 $ git add README.md
 $ git commit -m "first commit"
-$ git remote add origin git@github.com:github-username/enumeration-results.git
+$ git remote add origin git@github.com:<github-username>/subdomain-enumeration.git
 $ git push -u origin master
 ``` 
 
 ---
 
 ## Step 2: Automation Script
-Here is a fairly straightforward Bash script to automate everything discussed so far.
+To automate everything discussed so far, here is a simple Bash script, which will perform the following actions:
+
+1. Create a directory for the program and target domain if they do not already exist.
+2. Run subfinder on the target domain.
+2. Run Aquatone on the subfinder results.
+3. Sort the results for easier analysis.
+4. Push the results to GitHub.
 
 ```bash
 #!/bin/bash
 
-ports="80,81,443,2082,2095,2096,3000,5000,8000,8001,8008,8080,8081,8118,8083,8443,8834,8880,8888,55672"
+_ports="80,81,443,3000,5000,5555,8000,8001,8008,8080,8081,8118,8083,8443,8444,8834,8880,8888,55672"
+_output_dir="/home/ubuntu/subdomain-enumeration/"
 
 usage () {
     echo -e "Usage: $0 OPTIONS"
+    echo -e "  -p <program>     Name of program"
     echo -e "  -d <domain>      Target domain"
-    echo -e "  -n               Do not push results to GitHub"
 }
 
 # Get options
-while getopts ":d:n" option; do
+while getopts ":p:d:" option; do
     case "${option}" in
-        d) domain=${OPTARG};;
-        n) no_github=true;;
+        p) _program=${OPTARG};;
+        d) _domain=${OPTARG};;
         *) usage; exit;;
     esac
 done
 shift "$((OPTIND-1))"
 
-# Only run if -d argument is supplied
-if [ $domain ]; then
-    printf "========================================\n"
-    printf "[+] PHASE 1: Running Aquatone (Ruby) discover module to identify subdomains\n"
 
-    # Aquatone (Ruby) discover command using resolvers:
-    # Cloudflare, Google, Quad9, and OpenDNS
-    aquatone-discover --threads 25 --fallback-nameservers 1.1.1.1,8.8.8.8,9.9.9.9,208.67.222.222 --domain ${domain}
-
-    # Rename file for consistency
-    mv ~/aquatone/${domain}/hosts.txt ~/aquatone/${domain}/aquatone-hosts.txt
-
-    printf "\n[+] PHASE 1: Complete\n"
-    printf "\n[+] PHASE 2: Running Amass to identify subdomains\n\n"
-
-    # Amass discovery command
-    amass -d ${domain} -ip -o ~/aquatone/${domain}/amass-hosts.txt
-
-    printf "\n[+] PHASE 2: Complete\n"
-    printf "\n[+] Sorting and combining results..."
-
-    # Manipulate text files by removing IP from all lines like (example.com,8.8.8.8) and combine results
-    sed 's/,.*//g' ~/aquatone/${domain}/aquatone-hosts.txt ~/aquatone/${domain}/amass-hosts.txt | sort -u > ~/aquatone/${domain}/combined-hosts.txt
-
-    printf "\n[+] Done.\n"
-    printf "\n[+] PHASE 3: Running Aquatone (Go) scanner on $(wc -l ~/aquatone/${domain}/combined-hosts.txt | cut -d " " -f 1) unqiue subdomains\n\n"
-
-    # Aquatone (Go) scan command. Writes to file but also displays on screen
-    cat ~/aquatone/${domain}/combined-hosts.txt | aquatone -threads 5 -http-timeout 3000 -scan-timeout 500 -screenshot-timeout 15000 -ports ${ports} -out ~/aquatone/${domain} | tee ~/aquatone/${domain}/aquatone-scan-output.txt
-
-    printf "[+] PHASE 3: Complete\n"
-
-    # Get all URLs along with their status codes
-    grep -e '^http:\/\/\|^https:\/\/' ~/aquatone/${domain}/aquatone-scan-output.txt | grep -v ': screenshot' | sort -u > ~/aquatone/${domain}/aquatone-scan-urls.txt
-
-    # Check if -n switch was given
-    if [ $no_github ]; then
-        printf "\n[+] Results will not be pushed to GitHub."
-    else
-        # Push the results to Github
-        printf "\n[+] PHASE 4: Pushing results to GitHub\n\n"
-
-        git add ~/aquatone/${domain}/aquatone_report.html
-        git add ~/aquatone/${domain}/headers/*
-        git add ~/aquatone/${domain}/html/*
-        git add ~/aquatone/${domain}/screenshots/*
-        git add ~/aquatone/${domain}/aquatone-scan-urls.txt
-        git commit -m "$(date "+%F %T") ${domain}"
-        git push -u origin master
-    fi
-    printf "\n[+] Done\n"
-else
-    # If the -d argument is not given, throw error
-    printf "\n[-] Error: please supply a domain using the -d argument"
+if [ -z $_domain ] || [ -z $_program ]; then
+    echo "ERROR: Missing required arguemnts."
+    exit 1
 fi
+
+if ! [ -d $_output_dir ]; then
+    echo "ERROR: Output directory does not exist."
+    exit 1
+fi
+
+printf "========================================\n"
+
+cd ${_output_dir}
+
+printf "Updating git repo...\n"
+git pull
+
+# Create directories if they do not exist
+mkdir -p ${_output_dir}/${_program}/${_domain}
+
+printf "[+] PHASE 1: Running subfinder to identify subdomains\n"
+
+subfinder -d ${_domain} -t 20 -o ${_output_dir}/${_program}/${_domain}/hosts-subfinder.txt
+
+printf "\n[+] PHASE 1: Complete\n"
+
+printf "\n[+] PHASE 2: Running Aquatone on $(wc -l ${_output_dir}/${_program}/${_domain}/hosts-subfinder.txt | cut -d " " -f 1) unqiue subdomains\n\n"
+
+# writes to a temporary file but also displays on screen
+cat ${_output_dir}/${_program}/${_domain}/hosts-subfinder.txt \
+  | aquatone -threads 10 -http-timeout 3000 -screenshot-timeout 15000 -ports ${_ports} -out ${_output_dir}/${_program}/${_domain}/ \
+  | tee ${_output_dir}/${_program}/${_domain}/aquatone-scan-output.txt
+
+printf "[+] PHASE 2: Complete\n"
+
+# extract all the URLs along with their status codes from the temporary file
+grep -e '^http:\/\/\|^https:\/\/' ${_output_dir}/${_program}/${_domain}/aquatone-scan-output.txt \
+  | grep -v ': screenshot' \
+  | sort -u > ${_output_dir}/${_program}/${_domain}/url-status-codes.txt
+
+# remove temporary file
+rm ${_output_dir}/${_program}/${_domain}/aquatone-scan-output.txt
+
+# sort headers to make them easier to find unique values in GitHub
+find ${_output_dir}/${_program}/${_domain}/headers/ \
+    -type f -exec sort {} -o {} \; \
+    -exec sed -i '/Date: /d' {} \;
+
+printf "\n[+] PHASE 4: Pushing results to GitHub\n\n"
+
+cd ${_output_dir}
+
+git add ${_output_dir}/${_program}/${_domain}/aquatone_report.html
+git add ${_output_dir}/${_program}/${_domain}/headers/*
+git add ${_output_dir}/${_program}/${_domain}/html/*
+git add ${_output_dir}/${_program}/${_domain}/screenshots/*
+git add ${_output_dir}/${_program}/${_domain}/url-status-codes.txt
+git add ${_output_dir}/${_program}/${_domain}/all-discovered-domains.txt
+git commit -m "$(date "+%F %T") ${_program}/${_domain}"
+git push -u origin master
+
+printf "\n[+] Done\n"
 
 ```
 
-Here is a breakdown of the script in case you're too lazy to figure it out:
-1. Run `aquatone-discover`, output results to `~/aquatone/example.com/aquatone-hosts.txt`
-2. Run `amass`, output results to `~/aquatone/example.com/amass-hosts.txt`
-3. Remove IP addresses from the results
-4. Combine the results from both tools into `~/aquatone/example.com/combined-hosts.txt`
-5. Pipe the combined results to Aquatone Go
-6. Scan the defined ports and attempt to screenshot open ports using Aquatone Go
-8. Push results to GitHub
-
 ---
 
-# Future Steps
-* Setup cron to run automation script periodically
-* Write another script to compare results and check for new subdomains, as well as major changes to a site's HTML or headers
-* Send push notifications using Slack
+# Conclusion
+
+Bug bounties are highly competitive. When a new program opens or a target scope is updated, the difference between a large payday and the sheer dissapointment that accompanies a duplicate bug can be a matter of minutes. Heavy automation is critical if you want to succeed.
+
+If you are just getting into bug bounties, I wish you the best of luck! Take this sample script as inspiration to think about how your workflow can be automated. You should never find yourself spending more time organzing and analyzing the output from your tools than you do actually looking for bugs.
