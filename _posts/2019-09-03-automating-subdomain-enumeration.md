@@ -251,6 +251,6 @@ printf "\n[+] Done\n"
 
 # Conclusion
 
-Bug bounties are highly competitive. When a new program opens or a target scope is updated, the difference between a large payday and the sheer dissapointment that accompanies a duplicate bug can be a matter of minutes. Heavy automation is critical if you want to succeed.
+Bug bounties are highly competitive. When a new program opens or a target scope is updated, the difference between a large payday and the sheer disappointment that accompanies a duplicate bug can be a matter of minutes. Heavy automation is critical if you want to succeed.
 
 If you are just getting into bug bounties, I wish you the best of luck! Take this sample script as inspiration to think about how your workflow can be automated. You should never find yourself spending more time organzing and analyzing the output from your tools than you do actually looking for bugs.
