@@ -32,7 +32,7 @@ My default configuration assumes the target domain has a wildcard scope, so all 
 
 ![target-scope-include](/img/burp-configuration/target-scope-include.png)
 
-### Excluding Binary Files
+### Exclude Binary Files
 Few things are more frustrating than when a page loads a large MP4 file, slowing Burp down to a crawl and making your computer sound like it's about to take off. That file is then populated in the proxy history and target site map, meaning you may have to load its contents again in order to remove it from those locations or manually place it out of scope. The same thing goes for font files hosted within the target scope.
 
 ![target-scope-exclude](/img/burp-configuration/target-scope-exclude.png)
@@ -49,7 +49,7 @@ Few things are more frustrating than when a page loads a large MP4 file, slowing
 
 # Proxy
 
-### Dropping Uninteresting Requests
+### Drop Uninteresting Requests
 
 Firefox will often issue requests in the background for things like <a href="https://support.mozilla.org/en-US/questions/1157121" target="_blank">detecting captive portals</a> and updating Google Safe Browsing signatures.
 
@@ -62,7 +62,7 @@ Firefox will often issue requests in the background for things like <a href="htt
 </textarea>
 <input value='Download' type='button' onclick="saveJsonAsFile(interceptclientrequests.value, 'Proxy.Options.Intercept_Client_Requests')" />
 
-### Rewriting Requests
+### Rewrite Requests
 
 I like to keep requests to as few lines as possible by removing some unnecessary headers. This can cause issues if the target application is sending XHR requests with modified `Accept*` headers. If I start noticing errors, I check the "Original Request" tab in the proxy history to see if my rules have removed any pertinent information.
 

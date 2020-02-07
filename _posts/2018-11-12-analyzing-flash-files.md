@@ -6,7 +6,7 @@ published: false
 
 This post demonstrates how to perform basic analysis of Flash files to discover common vulnerabilities.
 
-*Please note: these steps have only been tested on Kali Linux.*
+**These steps are intended to pbe performed on Kali Linux and have not been tested on another operating system.**
 
 ---
 
@@ -27,7 +27,7 @@ The JPEXS Decompiler depends on Oracle's Java 8, which can be installed using th
 
 Once Java is installed, go to the JPEXS Decompiler's <a href="https://github.com/jindrapetrik/jpexs-decompiler/releases/" target="_blank">releases</a> page. Grab the link for the latest Debian package and install it:
 ```
-$ wget https://github.com/jindrapetrik/jpexs-decompiler/releases/download/nightly1710/ffdec_11.2.0_nightly1710.deb
+$ wget https://github.com/jindrapetrik/jpexs-decompiler/releases/download/version11.2.0/ffdec_11.2.0.deb
 $ dpkg -i ffdec*.deb
 ```
 
